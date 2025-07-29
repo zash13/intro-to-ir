@@ -233,3 +233,39 @@ dtypes: float64(1), object(1)
 memory usage: 26.5+ KB
 None
 """
+
+# ------------- tf_idf  -------------
+#
+tf_idf_rows = []
+for idx, doc_id in enumerate(tf["doc_id"]):
+    tf_idf_doc = {"doc_id": doc_id}
+    for word in vocab:
+        word_tf = tf.loc[tf["doc_id"] == doc_id, word].values[0]
+        word_idf = idf.loc[idf["word"] == word, "idf"].values[0]
+        tf_idf_doc[word] = word_tf * word_idf
+
+    tf_idf_rows.append(tf_idf_doc)
+
+tf_idf = pd.DataFrame(tf_idf_rows)
+cols = ["doc_id"] + [col for col in tf_idf.columns if col != "doc_id"]
+tf_idf = tf_idf[cols]
+"""
+its taking a year to calculate everything ,  but i am not in optimizing mode , so 
+if you want to run it faster , keep them dict and work there , or even easyear , use libs !! , 
+anyway , i try to store it , its taking so long 
+print(tf_idf.head(4))
+print(tf_idf.info())
+   doc_id  determine  out  ...  for  connection  against
+0       0        0.0  0.0  ...  0.0         0.0      0.0
+1       1        0.0  0.0  ...  0.0         0.0      0.0
+2       2        0.0  0.0  ...  0.0         0.0      0.0
+3       3        0.0  0.0  ...  0.0         0.0      0.0
+
+[4 rows x 1688 columns]
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 250 entries, 0 to 249
+Columns: 1688 entries, doc_id to against
+dtypes: float64(1687), int64(1)
+memory usage: 3.2 MB
+None
+"""
