@@ -3,6 +3,7 @@ import re
 from bs4 import BeautifulSoup
 import pandas as pd
 import numpy as np
+from pandas.io.formats.format import math
 
 # ------------- global variables  -------------
 #
@@ -204,3 +205,31 @@ None
 """
 # ------------- idf  -------------
 #
+N = len(combind_title_desc)
+idf = {}
+for word in vocab:
+    word_df = df.loc[df["word"] == word, "df"]
+    if not word_df.empty:
+        idf[word] = math.log(N / (1 + word_df.values[0]))
+    else:
+        idf[word] = math.log(N / 1)
+idf = pd.DataFrame(list(idf.items()), columns=["word", "idf"])
+""" 
+print(idf.head(4))
+print(idf.info())
+          word       idf
+0  planningand  5.521461
+1     exposure  4.828314
+2      specify  4.828314
+3    elections  4.828314
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 1687 entries, 0 to 1686
+Data columns (total 2 columns):
+ #   Column  Non-Null Count  Dtype  
+---  ------  --------------  -----  
+ 0   word    1687 non-null   object 
+ 1   idf     1687 non-null   float64
+dtypes: float64(1), object(1)
+memory usage: 26.5+ KB
+None
+"""
