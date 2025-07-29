@@ -1,7 +1,14 @@
 import os
+from bs4 import BeautifulSoup
+import pandas as pd
+
+# ------------- global variables  -------------
+#
+DATASET_PATH = "/home/kk_gorbee/Documents/project/InternetRetrieval/BasicOperations/dataset/04.testset"
 
 
 # ------------- cleaning the dataset -------------
+#
 def create_block(data):
     clean_xml = []
     for line in data.splitlines():
@@ -21,7 +28,7 @@ def create_block(data):
     return xml_block
 
 
-def read_dataset(file_path):
+def preprocess_dataset(file_path):
     with open(file_path, mode="r", encoding="utf-8") as file:
         dataset = file.read()
     dataset_blocks = dataset.split("<top>")
@@ -37,9 +44,32 @@ def read_dataset(file_path):
     xml_dataset_file_path = os.path.join(dir_name, new_file_name)
     with open(xml_dataset_file_path, mode="w", encoding="utf-8") as file:
         file.write(xml_dataset)
+    return xml_dataset_file_path
 
 
-read_dataset(
-    "/home/kk_gorbee/Documents/project/InternetRetrieval/BasicOperations/dataset/04.testset"
-)
-# -------------  -------------
+DATASET_PATH = preprocess_dataset(DATASET_PATH)
+
+
+# ------------- read  dataset  -------------
+#
+
+
+def read_dataset(file_path):
+    dataset = []
+    with open(file_path, "r", encoding="utf-8") as file:
+        data = file.read()
+    soup = BeautifulSoup(data, "lxml-xml")
+
+    for top in soup.find_all("top"):
+        num = top.find("num").get_text(strip=True).replace("Number:", "").strip()
+        title = top.find("title").get_text(strip=True)
+        desc = top.find("desc").get_text(strip=True).replace("Description:", "").strip()
+        narr = top.find("narr").get_text(strip=True).replace("Narrative:", "").strip()
+        data = {"num": num, "title": title, "desc": desc, "narr": narr}
+        dataset.append(data)
+    return dataset
+
+
+data = read_dataset(DATASET_PATH)
+data = pd.DataFrame(data)
+print(data.head(5))
