@@ -1,6 +1,8 @@
 import os
+import re
 from bs4 import BeautifulSoup
 import pandas as pd
+import numpy as np
 
 # ------------- global variables  -------------
 #
@@ -72,4 +74,81 @@ def read_dataset(file_path):
 
 data = read_dataset(DATASET_PATH)
 data = pd.DataFrame(data)
-print(data.head(5))
+""" 
+print(data.info()) : 
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 250 entries, 0 to 249
+Data columns (total 4 columns):
+ #   Column  Non-Null Count  Dtype 
+---  ------  --------------  ----- 
+ 0   num     250 non-null    object
+ 1   title   250 non-null    object
+ 2   desc    250 non-null    object
+ 3   narr    250 non-null    object
+dtypes: object(4)
+memory usage: 7.9+ KB
+None
+"""
+
+
+# ------------- helpers -------------
+#
+def clean_input(input):
+    input = (
+        input.replace(",", "")
+        .replace("!", "")
+        .replace("?", "")
+        .replace("(", "")
+        .replace(")", "")
+        .replace(":", "")
+    )
+    return input
+
+
+class Token:
+    def __init__(self, vocab) -> None:
+        self.special_tokens = {
+            "<#START>": 0,
+            "<#PAD>": 1,
+            "<#UNKNOWN>": 2,
+            "<#END>": 3,
+        }
+        self.token_map = self._generate_token_map(vocab)
+
+    def _generate_token_map(self, vocab) -> dict[str, int]:
+        token_map = {
+            word: (idx + len(self.special_tokens)) for idx, word in enumerate(vocab)
+        }
+        return {**self.special_tokens, **token_map}
+
+    def get_token_map(self):
+        return self.token_map
+
+    def tokenize(self, input):
+        result = []
+        input = input.lower()
+        input = clean_input(input)
+
+        for word in input.split():
+            result.append(self.token_map.get(word, self.token_map["<#UNKNOWN>"]))
+        return [self.token_map["<#START>"]] + result + [self.token_map["<#END>"]]
+
+
+# ------------- general setup  -------------
+# generaly i am combinning both title and Description
+#
+combind_title_desc = data["title"] + " " + data["desc"]
+words_in_cols = combind_title_desc.str.lower().str.split()
+all_words = [word for sublist in words_in_cols for word in sublist]
+unique_words = set(all_words)
+unique_words = sorted(unique_words)
+vocab = [clean_input(word) for word in unique_words]
+vocab = set(vocab)
+vocab_size = len(vocab)
+tokenhelper = Token(vocab)
+
+"""
+print(vocab_size) :
+1814
+"""
+# ------------- tf -------------
