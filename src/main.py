@@ -151,18 +151,56 @@ print(vocab_size) :
 1687
 """
 # ------------- tf -------------
+#
 tf = []
-for doc in combind_title_desc:
+for idx, doc in combind_title_desc.str.lower().items():
     tf_doc = {word: doc.count(word) for word in vocab}
+    tf_doc["doc_id"] = idx
     tf.append(tf_doc)
 tf = pd.DataFrame(tf)
+cols = ["doc_id"] + [col for col in tf.columns if col != "doc_id"]
+tf = tf[cols]
 """ 
 print(tf.info())
 <class 'pandas.core.frame.DataFrame'>
 RangeIndex: 250 entries, 0 to 249
-Columns: 1687 entries, custody's to adoption
-dtypes: int64(1687)
+Columns: 1688 entries, doc_id to investigationsof
+dtypes: int64(1688)
 memory usage: 3.2 MB
 None
 """
-# ------------- tf -------------
+# ------------- df  -------------
+#
+df = {word: 0 for word in vocab}
+lower_docs = combind_title_desc.str.lower()
+for word in vocab:
+    for doc in lower_docs:
+        if word in doc:
+            df[word] += 1
+df = pd.DataFrame(list(df.items()), columns=["word", "df"])
+"""
+print(df.info())
+print(df.head(10))
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 1687 entries, 0 to 1686
+Data columns (total 2 columns):
+ #   Column  Non-Null Count  Dtype 
+---  ------  --------------  ----- 
+ 0   word    1687 non-null   object
+ 1   df      1687 non-null   int64 
+dtypes: int64(1), object(1)
+memory usage: 26.5+ KB
+None
+                 word  df
+0             testing   1
+1           personnel   2
+2           poisoning   2
+3          repeatedly   1
+4  members'activities   1
+5           republics   1
+6                  as  97
+.
+.
+"""
+# ------------- idf  -------------
+#
