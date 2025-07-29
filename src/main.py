@@ -146,9 +146,23 @@ vocab = [clean_input(word) for word in unique_words]
 vocab = set(vocab)
 vocab_size = len(vocab)
 tokenhelper = Token(vocab)
-
 """
 print(vocab_size) :
-1814
+1687
+"""
+# ------------- tf -------------
+tf = []
+for doc in combind_title_desc:
+    tf_doc = {word: doc.count(word) for word in vocab}
+    tf.append(tf_doc)
+tf = pd.DataFrame(tf)
+""" 
+print(tf.info())
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 250 entries, 0 to 249
+Columns: 1687 entries, custody's to adoption
+dtypes: int64(1687)
+memory usage: 3.2 MB
+None
 """
 # ------------- tf -------------
