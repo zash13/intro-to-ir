@@ -8,6 +8,7 @@ from pandas.io.formats.format import math
 # ------------- global variables  -------------
 #
 DATASET_PATH = "/home/kk_gorbee/Documents/project/InternetRetrieval/BasicOperations/dataset/04.testset"
+TF_IDF_FILE_PATH = "/home/kk_gorbee/Documents/project/InternetRetrieval/BasicOperations/dataset/tf_idf.csv"
 
 
 # ------------- cleaning the dataset -------------
@@ -94,16 +95,6 @@ None
 
 # ------------- helpers -------------
 #
-def clean_input(input):
-    input = (
-        input.replace(",", "")
-        .replace("!", "")
-        .replace("?", "")
-        .replace("(", "")
-        .replace(")", "")
-        .replace(":", "")
-    )
-    return input
 
 
 class Token:
@@ -128,11 +119,35 @@ class Token:
     def tokenize(self, input):
         result = []
         input = input.lower()
-        input = clean_input(input)
+        input = self.clean_input(input)
 
         for word in input.split():
             result.append(self.token_map.get(word, self.token_map["<#UNKNOWN>"]))
         return [self.token_map["<#START>"]] + result + [self.token_map["<#END>"]]
+
+    @staticmethod
+    def clean_input(input):
+        input = (
+            input.replace(",", "")
+            .replace("!", "")
+            .replace("?", "")
+            .replace("(", "")
+            .replace(")", "")
+            .replace(":", "")
+        )
+        return input
+
+
+class CSVStorage:
+    @staticmethod
+    def save(df, filename, index=False):
+        df.to_csv(filename, index=index)
+
+    @staticmethod
+    def load(filename):
+        if not os.path.exists(filename):
+            raise FileNotFoundError(f"The file {filename} does not exist")
+        return pd.read_csv(filename)
 
 
 # ------------- general setup  -------------
@@ -143,7 +158,7 @@ words_in_cols = combind_title_desc.str.lower().str.split()
 all_words = [word for sublist in words_in_cols for word in sublist]
 unique_words = set(all_words)
 unique_words = sorted(unique_words)
-vocab = [clean_input(word) for word in unique_words]
+vocab = [Token.clean_input(word) for word in unique_words]
 vocab = set(vocab)
 vocab_size = len(vocab)
 tokenhelper = Token(vocab)
@@ -236,19 +251,25 @@ None
 
 # ------------- tf_idf  -------------
 #
-tf_idf_rows = []
-for idx, doc_id in enumerate(tf["doc_id"]):
-    tf_idf_doc = {"doc_id": doc_id}
-    for word in vocab:
-        word_tf = tf.loc[tf["doc_id"] == doc_id, word].values[0]
-        word_idf = idf.loc[idf["word"] == word, "idf"].values[0]
-        tf_idf_doc[word] = word_tf * word_idf
+try:
+    tf_idf = CSVStorage.load(TF_IDF_FILE_PATH)
+except FileNotFoundError as _:
+    print("tf_idf file not exist , try to calculate it ")
+    tf_idf_rows = []
+    for idx, doc_id in enumerate(tf["doc_id"]):
+        tf_idf_doc = {"doc_id": doc_id}
+        for word in vocab:
+            word_tf = tf.loc[tf["doc_id"] == doc_id, word].values[0]
+            word_idf = idf.loc[idf["word"] == word, "idf"].values[0]
+            tf_idf_doc[word] = word_tf * word_idf
 
-    tf_idf_rows.append(tf_idf_doc)
+        tf_idf_rows.append(tf_idf_doc)
 
-tf_idf = pd.DataFrame(tf_idf_rows)
-cols = ["doc_id"] + [col for col in tf_idf.columns if col != "doc_id"]
-tf_idf = tf_idf[cols]
+    tf_idf = pd.DataFrame(tf_idf_rows)
+    cols = ["doc_id"] + [col for col in tf_idf.columns if col != "doc_id"]
+    tf_idf = tf_idf[cols]
+    CSVStorage.save(tf_idf, TF_IDF_FILE_PATH, False)
+
 """
 its taking a year to calculate everything ,  but i am not in optimizing mode , so 
 if you want to run it faster , keep them dict and work there , or even easyear , use libs !! , 
