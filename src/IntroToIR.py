@@ -4,13 +4,17 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import numpy as np
 from pandas.io.formats.format import math
+from tensorflow.keras.utils import to_categorical
+from embeding_model import CBOW, SkipGram
 
 # ------------- global variables  -------------
 #
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-DATASET_PATH = os.path.join(BASE_DIR, "..", "dataset", "04.testset")
-TF_IDF_FILE_PATH = os.path.join(BASE_DIR, "..", "dataset", "tf_idf.csv")
+DATASET_PATH = os.path.join(BASE_DIR, "..", "dataset", "TREC_Robust_2004", "04.testset")
+TF_IDF_FILE_PATH = os.path.join(
+    BASE_DIR, "..", "dataset", "TREC_Robust_2004", "tf_idf.csv"
+)
 DATASET_PATH = os.path.normpath(DATASET_PATH)
 TF_IDF_FILE_PATH = os.path.normpath(TF_IDF_FILE_PATH)
 
@@ -99,6 +103,39 @@ None
 
 # ------------- helpers -------------
 #
+
+
+def generate_cbow_skipgram_data(
+    tokenizer, sentences, window_size, vocab_size, model_type="cbow"
+):
+    cbow_inputs, cbow_targets = [], []
+    skipgram_inputs, skipgram_targets = [], []
+
+    for sentence in sentences:
+        tokenized = tokenizer.tokenize(sentence)
+        length = len(tokenized)
+
+        for idx in range(window_size, length - window_size):
+            context = (
+                tokenized[idx - window_size : idx]
+                + tokenized[idx + 1 : idx + window_size + 1]
+            )
+            target = tokenized[idx]
+
+            if model_type == "cbow":
+                cbow_inputs.append(context)
+                cbow_targets.append(to_categorical(target, num_classes=vocab_size))
+            elif model_type == "skipgram":
+                for context_word in context:
+                    skipgram_inputs.append([target])
+                    skipgram_targets.append(
+                        to_categorical(context_word, num_classes=vocab_size)
+                    )
+
+    if model_type == "cbow":
+        return cbow_inputs, cbow_targets
+    else:
+        return skipgram_inputs, skipgram_targets
 
 
 class Token:
@@ -294,3 +331,32 @@ dtypes: float64(1687), int64(1)
 memory usage: 3.2 MB
 None
 """
+
+# ------------- CBOW , SkipGram  -------------
+#
+
+sentences = combind_title_desc.tolist()
+cbow_inputs, cbow_targets = generate_cbow_skipgram_data(
+    tokenhelper,
+    sentences,
+    window_size=2,
+    vocab_size=len(tokenhelper.token_map),
+    model_type="cbow",
+)
+skipgram_inputs, skipgram_targets = generate_cbow_skipgram_data(
+    tokenhelper,
+    sentences,
+    window_size=2,
+    vocab_size=len(tokenhelper.token_map),
+    model_type="skipgram",
+)
+
+cbow_model = CBOW(
+    vocab_size=len(tokenhelper.token_map), window_size=2, embedding_size=50, epoch=10
+)
+cbow_model.fit(cbow_inputs, cbow_targets)
+
+skipgram_model = SkipGram(
+    vocab_size=len(tokenhelper.token_map), embedding_size=50, epoch=10
+)
+skipgram_model.fit(skipgram_inputs, skipgram_targets)

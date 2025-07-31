@@ -14,5 +14,8 @@
 
 ### web articles
 
-- CBOW:
+- CBOW & Skip-Gram:
+
   - [Understanding & Implementing The Continuous Bag-of-Words \(CBOW\) Model](https://spotintelligence.com/2023/07/27/continuous-bag-of-words/)
+  - [Continuous bag of words \(CBOW\) in NLP](https://www.geeksforgeeks.org/nlp/continuous-bag-of-words-cbow-in-nlp/)
+  - [word2vec - CBOW and Skip-Gram](https://www.jasonosajima.com/word2vec/)
