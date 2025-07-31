@@ -11,3 +11,8 @@
 - TREC Robust 2004:
   - [ir_datasets: TREC Robust04](https://ir-datasets.com/trec-robust04.html#trec-robust04)
   - [Overview of the TREC 2004 Robust Retrieval Track](https://trec.nist.gov/pubs/trec13/papers/ROBUST.OVERVIEW.pdf)
+
+### web articles
+
+- CBOW:
+  - [Understanding & Implementing The Continuous Bag-of-Words \(CBOW\) Model](https://spotintelligence.com/2023/07/27/continuous-bag-of-words/)

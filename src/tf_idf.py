@@ -7,8 +7,12 @@ from pandas.io.formats.format import math
 
 # ------------- global variables  -------------
 #
-DATASET_PATH = "/home/kk_gorbee/Documents/project/InternetRetrieval/BasicOperations/dataset/04.testset"
-TF_IDF_FILE_PATH = "/home/kk_gorbee/Documents/project/InternetRetrieval/BasicOperations/dataset/tf_idf.csv"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+DATASET_PATH = os.path.join(BASE_DIR, "..", "dataset", "04.testset")
+TF_IDF_FILE_PATH = os.path.join(BASE_DIR, "..", "dataset", "tf_idf.csv")
+DATASET_PATH = os.path.normpath(DATASET_PATH)
+TF_IDF_FILE_PATH = os.path.normpath(TF_IDF_FILE_PATH)
 
 
 # ------------- cleaning the dataset -------------

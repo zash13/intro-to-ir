@@ -1,0 +1,12 @@
+{
+  "venvPath": "./",
+  "venv": "virt",
+  "pythonVersion": "3.11",
+  "pythonPath": "./virt/bin/python",
+  "reportMissingImports": "error",
+  "exclude": ["**/__pycache__"],
+  "typeCheckingMode": "basic",
+  "reportMissingImports": false,
+  "reportMissingModuleSource": false,
+  "extraPaths": ["./virt/lib/python3.11/site-packages"]
+}
