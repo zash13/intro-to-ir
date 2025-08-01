@@ -46,8 +46,10 @@ class CBOW(AbstractMethod):
         return model
 
     def fit(self, input, target):
-        history = self._model.fit(input, target, epochs=self.epoch, verbose=0)
-        return history.history["loss"][0]
+        input = np.array(input)
+        target = np.array(target)
+        history = self._model.fit(input, target, verbose=1, epochs=self.epoch)
+        return history.history["loss"]
 
     def get_weights(self):
         return self._model.get_weights()
@@ -80,8 +82,10 @@ class SkipGram(AbstractMethod):
         return model
 
     def fit(self, input, target):
+        input = np.array(input)
+        target = np.array(target)
         history = self._model.fit(input, target, epochs=self.epoch, verbose=0)
-        return history.history["loss"][0]
+        return history.history["loss"]
 
     def get_weights(self):
         return self._model.get_weights()
