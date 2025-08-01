@@ -27,16 +27,10 @@ class CBOW(AbstractMethod):
         self._model = self._build_model(vocab_size, embedding_size, window_size)
         self.epoch = epoch
 
-    def _build_model(self, input_size: int, embedding_size: int, window_size: int):
-        inputs = keras.Input(shape=(2 * window_size,))
-        x = keras.layers.Embedding(
-            input_dim=input_size,
-            output_dim=embedding_size,
-            input_length=2 * window_size,
-        )(inputs)
-        x = keras.layers.Lambda(lambda x: tf.reduce_mean(x, axis=1))(x)
-        outputs = keras.layers.Dense(units=input_size, activation="softmax")(x)
-
+    def _build_model(self, vocab_size: int, embedding_size: int, window_size: int):
+        inputs = keras.Input(shape=(vocab_size,))
+        x = keras.layers.Dense(embedding_size, activation="linear")(inputs)
+        outputs = keras.layers.Dense(vocab_size, activation="softmax")(x)
         model = keras.Model(inputs=inputs, outputs=outputs)
         model.compile(
             optimizer=keras.optimizers.Adam(),
@@ -46,8 +40,9 @@ class CBOW(AbstractMethod):
         return model
 
     def fit(self, input, target):
-        input = np.array(input)
-        target = np.array(target)
+        input = np.array(input)  # shape: (3955, vocab_size)
+        target = np.array(target)  # shape: (3955, vocab_size)
+        print(input.shape, target.shape)
         history = self._model.fit(input, target, verbose=1, epochs=self.epoch)
         return history.history["loss"]
 

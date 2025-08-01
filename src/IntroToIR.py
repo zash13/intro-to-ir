@@ -107,7 +107,7 @@ None
 
 
 def generate_cbow_skipgram_data(
-    tokenizer, sentences, window_size, vocab_size, model_type="cbow"
+    tokenizer: "Token", sentences, window_size, vocab_size, model_type="cbow"
 ):
     # if window size is even
     if window_size % 2 == 0:
@@ -137,15 +137,15 @@ def generate_cbow_skipgram_data(
             )
             target = tokenized[idx]
 
+            binary_vector_input = tokenizer.binary_vector(context)
+            binary_vector_target = tokenizer.binary_vector([target])
             if model_type == "cbow":
-                cbow_inputs.append(context)
-                cbow_targets.append(to_categorical(target, num_classes=vocab_size))
+                cbow_inputs.append(binary_vector_input)
+                cbow_targets.append(binary_vector_target)
             elif model_type == "skipgram":
                 for context_word in context:
-                    skipgram_inputs.append([target])
-                    skipgram_targets.append(
-                        to_categorical(context_word, num_classes=vocab_size)
-                    )
+                    skipgram_inputs.append(binary_vector_target)
+                    skipgram_targets.append(binary_vector_input)
 
     if model_type == "cbow":
         return cbow_inputs, cbow_targets
@@ -182,11 +182,12 @@ class Token:
         return [self.token_map["<#START>"]] + result + [self.token_map["<#END>"]]
 
     def binary_vector(self, token_list: list[int]):
-        result_list = np.zeros((0, len(self.token_map)))
+        result_list = np.zeros(len(self.token_map), dtype=int)
 
         for token in token_list:
             if 0 <= token < len(self.token_map):
-                result_list[0, token] = 1
+                result_list[token] = 1
+        return result_list
 
     @staticmethod
     def clean_input(input):
@@ -393,7 +394,8 @@ def plot_loss(loss_values, filename="loss_curve.png"):
 cbow_model = CBOW(
     vocab_size=len(tokenhelper.token_map), window_size=3, embedding_size=100, epoch=150
 )
-# loss = cbow_model.fit(cbow_inputs, cbow_targets)
+loss = cbow_model.fit(cbow_inputs, cbow_targets)
+plot_loss(loss)
 
 skipgram_model = SkipGram(
     vocab_size=len(tokenhelper.token_map), embedding_size=50, epoch=10
