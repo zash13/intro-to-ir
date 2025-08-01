@@ -1,0 +1,5 @@
+I expected that using embeddings and the standard CBOW model would make a big difference. But on this dataset, and considering how the loss functions differ, CBOW1, which is much simpler and doesn't use an embedding layer, is performing better.
+
+For now, I will keep both versions, but in the future—after a few more commits—I will remove CBOW2 if it doesn't show any improvement or prove its value.
+
+Both cbow2_loss and cbow1_loss images were taken after several tries. I did my best to give both models equal conditions.

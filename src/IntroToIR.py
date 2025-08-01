@@ -5,8 +5,9 @@ import pandas as pd
 import numpy as np
 from pandas.io.formats.format import math
 from tensorflow.keras.utils import to_categorical
-from embeding_model import CBOW, SkipGram
+from embeding_model import CBOW, CBOW2, SkipGram
 import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
 
 # ------------- global variables  -------------
 #
@@ -115,6 +116,7 @@ def generate_cbow_skipgram_data(
     half_window = (window_size - 1) / 2
     half_window = int(half_window)
     cbow_inputs, cbow_targets = [], []
+    cbow_inputs2, cbow_targets2 = [], []
     skipgram_inputs, skipgram_targets = [], []
 
     for sentence in sentences:
@@ -142,13 +144,15 @@ def generate_cbow_skipgram_data(
             if model_type == "cbow":
                 cbow_inputs.append(binary_vector_input)
                 cbow_targets.append(binary_vector_target)
+                cbow_inputs2.append(context)
+                cbow_targets2.append(target)
             elif model_type == "skipgram":
                 for context_word in context:
                     skipgram_inputs.append(binary_vector_target)
                     skipgram_targets.append(binary_vector_input)
 
     if model_type == "cbow":
-        return cbow_inputs, cbow_targets
+        return cbow_inputs, cbow_targets, cbow_inputs2, cbow_targets2
     else:
         return skipgram_inputs, skipgram_targets
 
@@ -183,10 +187,10 @@ class Token:
 
     def binary_vector(self, token_list: list[int]):
         result_list = np.zeros(len(self.token_map), dtype=int)
-
         for token in token_list:
             if 0 <= token < len(self.token_map):
                 result_list[token] = 1
+
         return result_list
 
     @staticmethod
@@ -359,24 +363,21 @@ None
 #
 
 sentences = combind_title_desc.tolist()
-cbow_inputs, cbow_targets = generate_cbow_skipgram_data(
+cbow_inputs, cbow_targets, cbow_inputs2, cbow_targets2 = generate_cbow_skipgram_data(
     tokenhelper,
     sentences,
     window_size=3,
     vocab_size=len(tokenhelper.token_map),
     model_type="cbow",
 )
+"""
 skipgram_inputs, skipgram_targets = generate_cbow_skipgram_data(
     tokenhelper,
     sentences,
     window_size=3,
     vocab_size=len(tokenhelper.token_map),
     model_type="skipgram",
-)
-
-print(
-    f"info -> total len is : {len(cbow_inputs)} \n while each input size is {len(cbow_inputs[0])}"
-)
+)"""
 
 
 def plot_loss(loss_values, filename="loss_curve.png"):
@@ -391,13 +392,40 @@ def plot_loss(loss_values, filename="loss_curve.png"):
     plt.close()
 
 
-cbow_model = CBOW(
-    vocab_size=len(tokenhelper.token_map), window_size=3, embedding_size=100, epoch=150
+X_train1, X_val1, y_train1, y_val1 = train_test_split(
+    cbow_inputs2,
+    cbow_targets2,
+    test_size=0.1,
+    random_state=42,
+    shuffle=True,
 )
-loss = cbow_model.fit(cbow_inputs, cbow_targets)
-plot_loss(loss)
+cbow_model2 = CBOW2(
+    vocab_size=len(tokenhelper.token_map), window_size=3, embedding_size=50, epoch=80
+)
+loss = cbow_model2.fit(X_train1, y_train1)
+plot_loss(loss, "cbow2_loss.png")
+y_pred1 = cbow_model2.predict(X_val1)
+y_pred_indices1 = np.argmax(y_pred1, axis=1)
+accuracy = np.mean(y_pred_indices1 == y_val1)
+print(f"Validation accuracy CBOW2 (indices): {accuracy:.4f}")
 
-skipgram_model = SkipGram(
-    vocab_size=len(tokenhelper.token_map), embedding_size=50, epoch=10
+X_train, X_val, y_train, y_val = train_test_split(
+    cbow_inputs,
+    cbow_targets,
+    test_size=0.1,
+    random_state=42,
+    shuffle=True,
 )
+cbow_model = CBOW(
+    vocab_size=len(tokenhelper.token_map), window_size=3, embedding_size=100, epoch=80
+)
+loss = cbow_model.fit(X_train, y_train)
+plot_loss(loss, "cbow_loss.png")
+y_pred = cbow_model.predict(X_val)
+y_pred_indices = np.argmax(y_pred, axis=1)
+y_true_indices = np.argmax(y_val, axis=1)
+accuracy = np.mean(y_pred_indices == y_true_indices)
+print(f"Validation accuracy CBOW (multi-hot): {accuracy:.4f}")
+
+# Train and evaluate CBOW2 (index inputs)
 # skipgram_mode.fit(skipgram_inputs, skipgram_targets)
