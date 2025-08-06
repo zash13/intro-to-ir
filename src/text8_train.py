@@ -7,6 +7,12 @@ from bs4 import BeautifulSoup
 from embeding_model import CBOW, SkipGram
 
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+DATASET_PATH = os.path.join(BASE_DIR, "..", "dataset", "Text8", "text8.text")
+DATASET_PATH = os.path.normpath(DATASET_PATH)
+
+
 class Token:
     def __init__(self, vocab) -> None:
         self.special_tokens = {
