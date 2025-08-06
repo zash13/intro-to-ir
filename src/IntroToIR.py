@@ -1,5 +1,4 @@
 import os
-import re
 from bs4 import BeautifulSoup
 import pandas as pd
 import numpy as np
@@ -152,7 +151,7 @@ def generate_cbow_skipgram_data(
                     skipgram_targets.append(binary_vector_input)
 
     if model_type == "cbow":
-        return cbow_inputs, cbow_targets, cbow_inputs2, cbow_targets2
+        return (cbow_inputs, cbow_targets)
     else:
         return skipgram_inputs, skipgram_targets
 
@@ -216,6 +215,18 @@ class CSVStorage:
         if not os.path.exists(filename):
             raise FileNotFoundError(f"The file {filename} does not exist")
         return pd.read_csv(filename)
+
+
+def plot_loss(loss_values, filename="loss_curve.png"):
+    plt.figure(figsize=(10, 6))
+    plt.plot(loss_values, label="Training Loss", color="blue")
+    plt.title("Training Loss Over Epochs")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.grid(True)
+    plt.legend()
+    plt.savefig(filename)
+    plt.close()
 
 
 # ------------- general setup  -------------
@@ -362,53 +373,17 @@ None
 # ------------- CBOW , SkipGram  -------------
 #
 
+# -- CBOW:
 sentences = combind_title_desc.tolist()
-cbow_inputs, cbow_targets, cbow_inputs2, cbow_targets2 = generate_cbow_skipgram_data(
+
+# preprocess the data
+cbow_inputs, cbow_targets = generate_cbow_skipgram_data(
     tokenhelper,
     sentences,
     window_size=3,
     vocab_size=len(tokenhelper.token_map),
     model_type="cbow",
 )
-"""
-skipgram_inputs, skipgram_targets = generate_cbow_skipgram_data(
-    tokenhelper,
-    sentences,
-    window_size=3,
-    vocab_size=len(tokenhelper.token_map),
-    model_type="skipgram",
-)"""
-
-
-def plot_loss(loss_values, filename="loss_curve.png"):
-    plt.figure(figsize=(10, 6))
-    plt.plot(loss_values, label="Training Loss", color="blue")
-    plt.title("Training Loss Over Epochs")
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
-    plt.grid(True)
-    plt.legend()
-    plt.savefig(filename)
-    plt.close()
-
-
-X_train1, X_val1, y_train1, y_val1 = train_test_split(
-    cbow_inputs2,
-    cbow_targets2,
-    test_size=0.1,
-    random_state=42,
-    shuffle=True,
-)
-cbow_model2 = CBOW2(
-    vocab_size=len(tokenhelper.token_map), window_size=3, embedding_size=50, epoch=80
-)
-loss = cbow_model2.fit(X_train1, y_train1)
-plot_loss(loss, "cbow2_loss.png")
-y_pred1 = cbow_model2.predict(X_val1)
-y_pred_indices1 = np.argmax(y_pred1, axis=1)
-accuracy = np.mean(y_pred_indices1 == y_val1)
-print(f"Validation accuracy CBOW2 (indices): {accuracy:.4f}")
-
 X_train, X_val, y_train, y_val = train_test_split(
     cbow_inputs,
     cbow_targets,
@@ -416,6 +391,7 @@ X_train, X_val, y_train, y_val = train_test_split(
     random_state=42,
     shuffle=True,
 )
+# train the model
 cbow_model = CBOW(
     vocab_size=len(tokenhelper.token_map), window_size=3, embedding_size=100, epoch=80
 )
@@ -426,6 +402,3 @@ y_pred_indices = np.argmax(y_pred, axis=1)
 y_true_indices = np.argmax(y_val, axis=1)
 accuracy = np.mean(y_pred_indices == y_true_indices)
 print(f"Validation accuracy CBOW (multi-hot): {accuracy:.4f}")
-
-# Train and evaluate CBOW2 (index inputs)
-# skipgram_mode.fit(skipgram_inputs, skipgram_targets)
