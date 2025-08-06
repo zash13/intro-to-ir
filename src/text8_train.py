@@ -9,7 +9,7 @@ from embeding_model import CBOW, SkipGram
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-DATASET_PATH = os.path.join(BASE_DIR, "..", "dataset", "Text8", "text8.text")
+DATASET_PATH = os.path.join(BASE_DIR, "..", "dataset", "Text8", "text8.txt")
 DATASET_PATH = os.path.normpath(DATASET_PATH)
 
 
@@ -136,14 +136,37 @@ def generate_cbow_skipgram_data(
         return skipgram_inputs, skipgram_targets
 
 
+# preprocess data
+data = []
+with open(DATASET_PATH) as f:
+    data = f.read()
+print(type(data))
+# output : <class 'str'>
+data_clean = Token.clean_input(data)
+words_list = data.lower().split()
+words_list = set(words_list)
+words_list = sorted(words_list)
+vocab = [Token.clean_input(word) for word in words_list]
+vocab = list(set(vocab))
+vocab_size = len(vocab)
+print(vocab_size, vocab[:10])
+# output : 253854 ['excellite', 'spins', 'supertoys', 'xdarwin', 'neuharth', 'strettodimessina', 'cowpuncher', 'bloomington', 'rounding', 'operaci']
+tokenhelper = Token(vocab)
+toekn_map = tokenhelper.get_token_map()
+print(type(toekn_map))
+print(toekn_map.get("excellite", " "))
+# output : <class 'dict'> 187747
+
+
 # ------------- CBOW , SkipGram  -------------
 #
 
 # -- CBOW:
-sentences = combind_title_desc.tolist()
 
 # preprocess the data
+"""
 cbow_inputs, cbow_targets = generate_cbow_skipgram_data(
+
     tokenhelper,
     sentences,
     window_size=3,
@@ -168,3 +191,4 @@ y_pred_indices = np.argmax(y_pred, axis=1)
 y_true_indices = np.argmax(y_val, axis=1)
 accuracy = np.mean(y_pred_indices == y_true_indices)
 print(f"Validation accuracy CBOW (multi-hot): {accuracy:.4f}")
+      """
