@@ -14,7 +14,7 @@
   - [Overview of the TREC 2004 Robust Retrieval Track](https://trec.nist.gov/pubs/trec13/papers/ROBUST.OVERVIEW.pdf)
 
 - Text8:
-  - [huggingface:text8](https://huggingface.co/datasets/afmck/text8)
+  - [yorkyong:text8-zip](https://www.kaggle.com/datasets/yorkyong/text8-zip)
 
 ### web articles
 
