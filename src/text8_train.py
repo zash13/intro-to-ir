@@ -34,9 +34,6 @@ class Token:
 
     def tokenize(self, input):
         result = []
-        input = input.lower()
-        input = self.clean_input(input)
-
         for word in input.split():
             result.append(self.token_map.get(word, self.token_map["<#UNKNOWN>"]))
         return [self.token_map["<#START>"]] + result + [self.token_map["<#END>"]]
@@ -101,6 +98,7 @@ def generate_cbow_skipgram_data(
     for sentence in sentences:
         tokenized = tokenizer.tokenize(sentence)
         length = len(tokenized)
+        print(length)
 
         # for example if i have 5 word and window_size is 3 , then i will get
         # pad word0 word1
@@ -144,9 +142,9 @@ print(type(data))
 # output : <class 'str'>
 data_clean = Token.clean_input(data)
 words_list = data.lower().split()
-words_list = set(words_list)
-words_list = sorted(words_list)
-vocab = [Token.clean_input(word) for word in words_list]
+unique_words_list = set(words_list)
+unique_words_list = sorted(unique_words_list)
+vocab = [Token.clean_input(word) for word in unique_words_list]
 vocab = list(set(vocab))
 vocab_size = len(vocab)
 print(vocab_size, vocab[:10])
@@ -157,6 +155,8 @@ print(type(toekn_map))
 print(toekn_map.get("excellite", " "))
 # output : <class 'dict'> 187747
 
+# data set hase no abbility to become list of sentences , its just words , without anything that help me to seprate them into sentences
+sentenc = [" ".join(words_list)]
 
 # ------------- CBOW , SkipGram  -------------
 #
@@ -164,11 +164,9 @@ print(toekn_map.get("excellite", " "))
 # -- CBOW:
 
 # preprocess the data
-"""
 cbow_inputs, cbow_targets = generate_cbow_skipgram_data(
-
     tokenhelper,
-    sentences,
+    sentenc,
     window_size=3,
     vocab_size=len(tokenhelper.token_map),
     model_type="cbow",
@@ -191,4 +189,3 @@ y_pred_indices = np.argmax(y_pred, axis=1)
 y_true_indices = np.argmax(y_val, axis=1)
 accuracy = np.mean(y_pred_indices == y_true_indices)
 print(f"Validation accuracy CBOW (multi-hot): {accuracy:.4f}")
-      """
