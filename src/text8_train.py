@@ -171,21 +171,10 @@ cbow_inputs, cbow_targets = generate_cbow_skipgram_data(
     vocab_size=len(tokenhelper.token_map),
     model_type="cbow",
 )
-X_train, X_val, y_train, y_val = train_test_split(
-    cbow_inputs,
-    cbow_targets,
-    test_size=0.1,
-    random_state=42,
-    shuffle=True,
-)
 # train the model
 cbow_model = CBOW(
     vocab_size=len(tokenhelper.token_map), window_size=3, embedding_size=100, epoch=80
 )
-loss = cbow_model.fit(X_train, y_train)
+loss = cbow_model.fit(cbow_inputs, cbow_targets)
 plot_loss(loss, "cbow_loss.png")
-y_pred = cbow_model.predict(X_val)
-y_pred_indices = np.argmax(y_pred, axis=1)
-y_true_indices = np.argmax(y_val, axis=1)
-accuracy = np.mean(y_pred_indices == y_true_indices)
-print(f"Validation accuracy CBOW (multi-hot): {accuracy:.4f}")
+y_pred = cbow_model.predict(["hello", "are"])
