@@ -2,10 +2,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
-from sklearn.model_selection import train_test_split
-from bs4 import BeautifulSoup
-from embeding_model import CBOW, SkipGram
-
+from embeding_model import CBOW2, SkipGram
+from collections import Counter
+from tqdm import tqdm
 
 BASE_DIR = os.getcwd()
 
@@ -157,6 +156,204 @@ print(toekn_map.get("excellite", " "))
 # data set hase no abbility to become list of sentences , its just words , without anything that help me to seprate them into sentences
 max_word = 20  # words per sentence
 chunk_size = 100  # jumber of sentences to process at once
+min_word_freq = 5
+
+# update 1 :
+# still have problem with size of vocab ,
+# so i try to use tf to find stopwords and words that have low frequency
+#
+stopwords = [
+    "a",
+    "about",
+    "above",
+    "after",
+    "again",
+    "against",
+    "all",
+    "am",
+    "an",
+    "and",
+    "any",
+    "are",
+    "aren't",
+    "as",
+    "at",
+    "be",
+    "because",
+    "been",
+    "before",
+    "being",
+    "below",
+    "between",
+    "both",
+    "but",
+    "by",
+    "can't",
+    "cannot",
+    "could",
+    "couldn't",
+    "did",
+    "didn't",
+    "do",
+    "does",
+    "doesn't",
+    "doing",
+    "don't",
+    "down",
+    "during",
+    "each",
+    "few",
+    "for",
+    "from",
+    "further",
+    "had",
+    "hadn't",
+    "has",
+    "hasn't",
+    "have",
+    "haven't",
+    "having",
+    "he",
+    "he'd",
+    "he'll",
+    "he's",
+    "her",
+    "here",
+    "here's",
+    "hers",
+    "herself",
+    "him",
+    "himself",
+    "his",
+    "how",
+    "how's",
+    "i",
+    "i'd",
+    "i'll",
+    "i'm",
+    "i've",
+    "if",
+    "in",
+    "into",
+    "is",
+    "isn't",
+    "it",
+    "it's",
+    "its",
+    "itself",
+    "let's",
+    "me",
+    "more",
+    "most",
+    "mustn't",
+    "my",
+    "myself",
+    "no",
+    "nor",
+    "not",
+    "of",
+    "off",
+    "on",
+    "once",
+    "only",
+    "or",
+    "other",
+    "ought",
+    "our",
+    "ours",
+    "ourselves",
+    "out",
+    "over",
+    "own",
+    "same",
+    "shan't",
+    "she",
+    "she'd",
+    "she'll",
+    "she's",
+    "should",
+    "shouldn't",
+    "so",
+    "some",
+    "such",
+    "than",
+    "that",
+    "that's",
+    "the",
+    "their",
+    "theirs",
+    "them",
+    "themselves",
+    "then",
+    "there",
+    "there's",
+    "these",
+    "they",
+    "they'd",
+    "they'll",
+    "they're",
+    "they've",
+    "this",
+    "those",
+    "through",
+    "to",
+    "too",
+    "under",
+    "until",
+    "up",
+    "very",
+    "was",
+    "wasn't",
+    "we",
+    "we'd",
+    "we'll",
+    "we're",
+    "we've",
+    "were",
+    "weren't",
+    "what",
+    "what's",
+    "when",
+    "when's",
+    "where",
+    "where's",
+    "which",
+    "while",
+    "who",
+    "who's",
+    "whom",
+    "why",
+    "why's",
+    "will",
+    "with",
+    "won't",
+    "would",
+    "wouldn't",
+    "you",
+    "you'd",
+    "you'll",
+    "you're",
+    "you've",
+    "your",
+    "yours",
+    "yourself",
+    "yourselves",
+]
+# update2 : this is so slow , it not work for this many words
+# tf_doc = {word: words_list.count(word) for word in vocab}
+word_counts = Counter(words_list)
+tf_doc = {word: word_counts[word] for word in vocab}
+for word in tf_doc:
+    if tf_doc.get(word, 0) < min_word_freq:
+        stopwords.append(word)
+stopwords_set = set(stopwords)
+filter_dataset = [
+    word
+    for word in tqdm(words_list, desc="Filtering words")
+    if word not in stopwords_set
+]
+print(f"orginal dataset size {len(words_list)}")
+print(f"filtered dataset size {len(filter_dataset)}")
 
 
 def generate_sentences(words, words_per_sentence):
@@ -164,12 +361,12 @@ def generate_sentences(words, words_per_sentence):
         yield " ".join(words[i : i + words_per_sentence])
 
 
-cbow_model = CBOW(
-    vocab_size=len(tokenhelper.token_map), window_size=5, embedding_size=500, epoch=20
+cbow_model = CBOW2(
+    vocab_size=len(tokenhelper.token_map), window_size=3, embedding_size=300, epoch=20
 )
 
 all_loss = []
-sentence_generator = generate_sentences(words_list, max_word)
+sentence_generator = generate_sentences(filter_dataset, max_word)
 
 while True:
     chunk = []
@@ -189,7 +386,7 @@ while True:
     cbow_inputs, cbow_targets = generate_cbow_skipgram_data(
         tokenhelper,
         chunk,
-        window_size=5,
+        window_size=3,
         vocab_size=len(tokenhelper.token_map),
         model_type="cbow",
     )
