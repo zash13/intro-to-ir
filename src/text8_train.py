@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from embeding_model import CBOW, SkipGram
 
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.getcwd()
 
 DATASET_PATH = os.path.join(BASE_DIR, "..", "dataset", "Text8", "text8.txt")
 DATASET_PATH = os.path.normpath(DATASET_PATH)
@@ -98,7 +98,6 @@ def generate_cbow_skipgram_data(
     for sentence in sentences:
         tokenized = tokenizer.tokenize(sentence)
         length = len(tokenized)
-        print(length)
 
         # for example if i have 5 word and window_size is 3 , then i will get
         # pad word0 word1
@@ -156,25 +155,47 @@ print(toekn_map.get("excellite", " "))
 # output : <class 'dict'> 187747
 
 # data set hase no abbility to become list of sentences , its just words , without anything that help me to seprate them into sentences
-sentenc = [" ".join(words_list)]
+max_word = 20  # words per sentence
+chunk_size = 100  # jumber of sentences to process at once
 
-# ------------- CBOW , SkipGram  -------------
-#
 
-# -- CBOW:
+def generate_sentences(words, words_per_sentence):
+    for i in range(0, len(words), words_per_sentence):
+        yield " ".join(words[i : i + words_per_sentence])
 
-# preprocess the data
-cbow_inputs, cbow_targets = generate_cbow_skipgram_data(
-    tokenhelper,
-    sentenc,
-    window_size=3,
-    vocab_size=len(tokenhelper.token_map),
-    model_type="cbow",
-)
-# train the model
+
 cbow_model = CBOW(
-    vocab_size=len(tokenhelper.token_map), window_size=3, embedding_size=100, epoch=80
+    vocab_size=len(tokenhelper.token_map), window_size=5, embedding_size=500, epoch=20
 )
-loss = cbow_model.fit(cbow_inputs, cbow_targets)
-plot_loss(loss, "cbow_loss.png")
+
+all_loss = []
+sentence_generator = generate_sentences(words_list, max_word)
+
+while True:
+    chunk = []
+    for _ in range(chunk_size):
+        try:
+            chunk.append(next(sentence_generator))
+        except StopIteration:
+            break
+
+    if not chunk:
+        break
+
+    print(
+        f"Processing chunk of {len(chunk)} sentences -> total words : {len(chunk) * len(chunk[0])}"
+    )
+
+    cbow_inputs, cbow_targets = generate_cbow_skipgram_data(
+        tokenhelper,
+        chunk,
+        window_size=5,
+        vocab_size=len(tokenhelper.token_map),
+        model_type="cbow",
+    )
+
+    chunk_loss = cbow_model.fit(cbow_inputs, cbow_targets)
+    all_loss.extend(chunk_loss)
+
+plot_loss(all_loss, "cbow_loss.png")
 y_pred = cbow_model.predict(["hello", "are"])
